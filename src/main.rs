@@ -3,12 +3,11 @@ mod defines;
 mod ansi;
 
 extern crate libc;
-use std::env;
-use std::io;
-use std::io::Write;
+use std::{env};
+use std::io::{stdin,stdout, Write};
 use std::os::unix::process::CommandExt;
 use std::path::Path;
-use parsing::{cut_commands, get_cmd};
+use parsing::{cut_commands};
 use std::process::Command;
 use users::{get_current_uid, get_user_by_uid};
 use defines::{PROGRAM_NAME};
@@ -16,26 +15,35 @@ use defines::{PROGRAM_NAME};
 use ansi::Ansi;
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "ihlsh")]
-struct Opt {
-    /// Command(s) to run.
-    #[structopt(short, long)]
-    command: String,
-}
 
 fn main() 
 {
-    let mut interactive: bool = true;
-    let mut repeat_once:bool = false;
-    let opt = Opt::from_args();
+    let mut _interactive:bool = false;
+    let mut script:bool = false;
+    let mut command_line:bool = false;
+    let command_line_command:String;
 
-    if opt.command == ""
+    let opt = Opt::from_args();
+    match RunningAs::decide(opt)
     {
-        interactive = false;
-        repeat_once = true;
+        RunningAs::Interactive(val) => 
+        {
+            _interactive = val;
+            command_line_command = String::from("");
+        }
+        RunningAs::Script(val) => 
+        {
+            script = val;
+            command_line_command = String::from("");
+        },
+        RunningAs::CommandLine(val) => 
+        {
+            command_line = true;
+            command_line_command = val.clone();
+        },
+
     }
-    
+
     /* Ensure the shell doesn't quit when trying to kill programs
     ruuning within the shell */
     unsafe 
@@ -53,20 +61,25 @@ fn main()
     {
         // The main loop
 
-        command_prompt = String::from(format!("{} > ", user.name().to_string_lossy()));
         let input:String;
-        if !interactive 
+
+        if command_line
         {
-            print!("{}", command_prompt);
-            io::stdout().flush().expect("ihls:: Couldn't flush stdout");
-            input = get_cmd();
+            // Strings are pointers, the actual data doesn't get auto copied so we clone it.
+            input = String::clone(&command_line_command);
+        }
+        else if script
+        {
+            // input = get_cmd(); //placeholder
+            return;
         }
         else
         {
-            // Strings are pointers, the actual data doesn't get auto copied so we clone it.
-            input = String::clone(&opt.command); 
+            command_prompt = String::from(format!("{} > ", user.name().to_string_lossy()));
+            print!("{}", command_prompt);
+            stdout().flush().expect("ihls:: Couldn't flush stdout");
+            input = get_cmd();
         }
-
         /* Ensure to skip lines that are empty so the program
         doesn't panic. */
         if input.trim() == "" 
@@ -103,13 +116,62 @@ fn main()
                 
             }
         }
-        if repeat_once != true
+        if command_line
         {
             break;
         }
         
     }
 }
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "ihlsh")]
+struct Opt {
+    /// Command string to run.
+    #[structopt(short, long)]
+    command: Option<String>,
+
+     /// A Script to run.
+     #[structopt(parse(from_str))]
+     script: Option<String>,
+ 
+}
+
+enum RunningAs 
+{
+Interactive(bool),
+Script(bool),
+CommandLine(String),
+}
+
+impl RunningAs 
+{
+    fn decide(opt:Opt) -> RunningAs
+    {
+
+        let mut _i_hate_rust:bool = false;
+        
+        match opt.command 
+        {
+            Some(x) => 
+            {
+                return RunningAs::CommandLine(x.clone())
+            },
+            None => _i_hate_rust = true,
+
+        }
+
+        match opt.script 
+        {
+            Some(_) => return RunningAs::Script(true),
+            None => _i_hate_rust = true,
+        }
+
+    RunningAs::Interactive(true)
+    }
+
+}
+
 
 fn run_cmd(command_tok: Vec<&str>, background:bool) -> bool
 {
@@ -154,4 +216,16 @@ fn change_dir(path: &str) -> bool{
 pub fn printerror(string: String)
 {
   eprintln!("{}{}{}",Ansi::RED,string,Ansi::COLOR_END);
+}
+
+pub fn get_cmd() -> String 
+{
+    let mut command_string:String = String::new();
+    stdin().read_line(&mut command_string).unwrap();
+    if command_string.trim() == ""
+    {
+        return String::from("");
+    }
+
+    command_string
 }

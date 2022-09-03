@@ -2,7 +2,7 @@
 name = "ihlsh"
 version = "0.1.0"
 edition = "2021"
-author = "Decator <deactor.c@proton.me>"
+authors = ["Decator <deactor.c@proton.me>"]
 
 [[bin]]
 name = "ihlsh"
