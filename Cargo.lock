@@ -68,7 +68,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "i_hate_linux_shells"
+name = "ihlsh"
 version = "0.1.0"
 dependencies = [
  "libc",

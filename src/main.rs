@@ -12,26 +12,17 @@ use parsing::{cut_commands, get_cmd};
 use std::process::Command;
 use users::{get_current_uid, get_user_by_uid};
 use defines::{PROGRAM_NAME};
-
 #[allow(non_snake_case)]
 use ansi::Ansi;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "basic")]
+#[structopt(name = "ihlsh")]
 struct Opt {
-    /// admin_level to consider
+    /// Command(s) to run.
     #[structopt(short, long)]
     command: String,
 }
-
-// fn help() {
-
-//     println!("usage:
-// -c | --command <string>
-//     Run command without interactive prompts.");
-// }
-
 
 fn main() 
 {
