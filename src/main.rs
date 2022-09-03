@@ -44,6 +44,12 @@ fn main()
 
     }
 
+    if _interactive
+    {
+        // Set the variable that tells what the shell is.
+        env::set_var("0", "ihlsh");
+    }
+
     /* Ensure the shell doesn't quit when trying to kill programs
     ruuning within the shell */
     unsafe 
@@ -57,6 +63,13 @@ fn main()
 
     let mut command_prompt: String;
 
+    // Making prompt and stuff
+    command_prompt = String::from(format!("{} > ", user.name().to_string_lossy())); 
+    match env::var("PS1")
+    {
+        Ok(x) => command_prompt = x.clone(),
+        Err(_) => (),
+    }
     loop
     {
         // The main loop
@@ -75,9 +88,9 @@ fn main()
         }
         else
         {
-            command_prompt = String::from(format!("{} > ", user.name().to_string_lossy()));
             print!("{}", command_prompt);
             stdout().flush().expect("ihls:: Couldn't flush stdout");
+            // Actually get command
             input = get_cmd();
         }
         /* Ensure to skip lines that are empty so the program
