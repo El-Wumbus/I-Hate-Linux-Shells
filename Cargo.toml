@@ -1,0 +1,12 @@
+[package]
+name = "i_hate_linux_shells"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "ihlsh"
+path = "src/main.rs"
+
+[dependencies]
+users="*"
+libc="*"
