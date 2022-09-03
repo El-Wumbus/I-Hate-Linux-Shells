@@ -188,6 +188,7 @@ impl RunningAs
 
 fn run_cmd(command_tok: Vec<&str>, background:bool) -> bool
 {
+    
     unsafe 
     {
         let mut command_instance = Command::new(command_tok[0]);

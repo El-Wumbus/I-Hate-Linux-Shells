@@ -8,7 +8,9 @@ I'm not a rust programmer.
 ```bash
 git clone https://github.com/El-Wumbus/I-Hate-Linux-Shells
 cd I-Hate-Linux-Shells
-cargo isntall --path=.
+cargo install --path=.
+# or to just run
+cargo run
 ```
 
 ## Usage
