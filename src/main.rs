@@ -1,5 +1,6 @@
-mod splitting;
+mod parsing;
 mod defines;
+mod ansi;
 
 extern crate libc;
 use std::env;
@@ -7,15 +8,43 @@ use std::io;
 use std::io::Write;
 use std::os::unix::process::CommandExt;
 use std::path::Path;
-use splitting::cut_commands;
+use parsing::{cut_commands, get_cmd};
 use std::process::Command;
 use users::{get_current_uid, get_user_by_uid};
 use defines::{PROGRAM_NAME};
 
+#[allow(non_snake_case)]
+use ansi::Ansi;
+use structopt::StructOpt;
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "basic")]
+struct Opt {
+    /// admin_level to consider
+    #[structopt(short, long)]
+    command: String,
+}
+
+// fn help() {
+
+//     println!("usage:
+// -c | --command <string>
+//     Run command without interactive prompts.");
+// }
 
 
 fn main() 
 {
+    let mut interactive: bool = true;
+    let mut repeat_once:bool = false;
+    let opt = Opt::from_args();
+
+    if opt.command == ""
+    {
+        interactive = false;
+        repeat_once = true;
+    }
+    
     /* Ensure the shell doesn't quit when trying to kill programs
     ruuning within the shell */
     unsafe 
@@ -29,19 +58,23 @@ fn main()
 
     let mut command_prompt: String;
 
-    loop 
+    loop
     {
         // The main loop
 
         command_prompt = String::from(format!("{} > ", user.name().to_string_lossy()));
-        print!("{}", command_prompt);
-        io::stdout().flush().expect("ihls:: Couldn't flush stdout");
-        // let mut input: String = String::new();
-        // io::stdin()
-        //     .read_line(&mut input)
-        //     .expect("ihls:: Couldn't read from stdin");
-
-        let input:String = get_cmd();
+        let input:String;
+        if !interactive 
+        {
+            print!("{}", command_prompt);
+            io::stdout().flush().expect("ihls:: Couldn't flush stdout");
+            input = get_cmd();
+        }
+        else
+        {
+            // Strings are pointers, the actual data doesn't get auto copied so we clone it.
+            input = String::clone(&opt.command); 
+        }
 
         /* Ensure to skip lines that are empty so the program
         doesn't panic. */
@@ -49,11 +82,8 @@ fn main()
         {
             continue;
         }
-        // let mut parts = input.trim().split_whitespace();
-        // let command = parts.next().unwrap();
-        // let args = parts;
-        let commands = cut_commands(&input);
 
+        let commands = cut_commands(&input);
         for command in commands
         {
             for mut dependent_command in command
@@ -82,6 +112,10 @@ fn main()
                 
             }
         }
+        if repeat_once != true
+        {
+            break;
+        }
         
     }
 }
@@ -109,7 +143,7 @@ fn run_cmd(command_tok: Vec<&str>, background:bool) -> bool
             return false // good
         }
         
-        eprintln!("{}:: Command not found!", PROGRAM_NAME);
+        printerror(format!("{}:: Command not found!", PROGRAM_NAME));
         return true // bad
     }
 }
@@ -118,7 +152,7 @@ fn change_dir(path: &str) -> bool{
     let path = Path::new(path);
     match env::set_current_dir(&path) {
         Err(err) => {
-            eprintln!("{}:: Failed to change the directory!\n{}",PROGRAM_NAME , err);
+            printerror(format!("{}:: Failed to change the directory!\n{}",PROGRAM_NAME , err));
             return false;
         }
         _ => (),
@@ -126,15 +160,7 @@ fn change_dir(path: &str) -> bool{
     return true;
 }
 
-
-fn get_cmd() -> String 
+pub fn printerror(string: String)
 {
-    let mut command_string:String = String::new();
-    io::stdin().read_line(&mut command_string).unwrap();
-    if command_string.trim() == ""
-    {
-        return String::from("");
-    }
-
-    command_string
+  eprintln!("{}{}{}",Ansi::RED,string,Ansi::COLOR_END);
 }
