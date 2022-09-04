@@ -5,6 +5,17 @@ I'm not a rust programmer.
 
 ## Installation
 
+### Build Dependencies
+
+#### MacOS
+
+For installing and compiling on MacOS you'll want xcode. A full list of make dependencies:
+
+* [Xcode Command Line Tools]()
+* Git - just cloning the repo
+* Rust (using rustup)
+* 
+
 ```bash
 git clone https://github.com/El-Wumbus/I-Hate-Linux-Shells
 cd I-Hate-Linux-Shells

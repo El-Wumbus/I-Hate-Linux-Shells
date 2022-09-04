@@ -17,7 +17,14 @@ use structopt::StructOpt;
 
 
 fn main() 
-{
+{   
+    // let home:String;
+    // match env::var("HOME")
+    // {
+    //     Ok(x) => home = x.clone(),
+    //     Err(_) => home = String::from("/"),
+    // }
+    
     let mut _interactive:bool = false;
     let mut script:bool = false;
     let mut command_line:bool = false;
@@ -113,18 +120,45 @@ fn main()
                 }
                 match dependent_command[0]
                 {
+                    "quit" => 
+                    {
+                        std::process::exit(0);
+                    },
+                    
                     "exit" =>
                     {
                         std::process::exit(0);
                     },
                     "cd" =>
                     {
+                        if dependent_command.len() < 2
+                        {   let mut home:String = String::from("/");
+                            match env::var("HOME")
+                            {
+                                Ok(x) => 
+                                {
+                                    
+                                    home = x.clone();
+                                    
+                                },
+                                Err(_) => (),
+                            }
+                            /* Strings allow for reborrowing.
+                            Because we explicitly typed 'home' as a String, we can have rust
+                            automatically derefernce the correct number of time. */
+                            let home:&str = &home.clone();
+                            change_dir(home);
+                            continue;
+                        }
+
                         change_dir(dependent_command[1]);
-                    }
+                    },
+
+
                     _ =>
                     {
                         run_cmd(dependent_command, is_background);
-                    }
+                    },
                 }
                 
             }
@@ -203,7 +237,9 @@ fn run_cmd(command_tok: Vec<&str>, background:bool) -> bool
         {
             if !background
             {
-                return child.wait().expect("Command did not run!").success();
+                let ret:bool = child.wait().expect("Command did not run!").success();
+                print!("\r");
+                return ret;
             }
             
             println!("{}:: {} working...", PROGRAM_NAME, child.id());
@@ -215,9 +251,26 @@ fn run_cmd(command_tok: Vec<&str>, background:bool) -> bool
     }
 }
 
-fn change_dir(path: &str) -> bool{
-    let path = Path::new(path);
-    match env::set_current_dir(&path) {
+fn change_dir(strpath: &str) -> bool
+{
+    
+    let mut cdpath = Path::new(strpath);
+    let home:&Path = Path::new("/");
+    match env::var("HOME")
+    {
+        Ok(x) => 
+        {
+            let xz= x;
+            #[allow(unused_variables)]
+            let home = Path::new(&xz);
+        },
+        Err(_) => (),
+    }
+    if cdpath == Path::new("")
+    {
+        cdpath = Path::new(&home);
+    }
+    match env::set_current_dir(&cdpath) {
         Err(err) => {
             printerror(format!("{}:: Failed to change the directory!\n{}",PROGRAM_NAME , err));
             return false;
