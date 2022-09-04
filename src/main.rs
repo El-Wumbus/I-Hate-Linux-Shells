@@ -119,7 +119,7 @@ fn main() {
 
                             exit_program!(exit_code);
                         }
-                    }
+                    },
                     "cd" => {
                         if dependent_command.len() < 2 {
                             let mut home: String = String::from("/");
@@ -138,6 +138,20 @@ fn main() {
                         }
 
                         change_directory!(dependent_command[1].as_str());
+                    },
+                    "exec" => {
+                        if dependent_command.len() < 2
+                        {
+                            printerror(String::from("No arguments supplied to 'exec'"));
+                        }
+                        else
+                        {
+                            let err = builtins::exec::run(&dependent_command[1..]);
+                            match err {
+                                exec::Error::Errno(x) => printerror(format!("Exec error: {}", x)),
+                                exec::Error::BadArgument(_) => (),
+                            }
+                        }
                     }
 
                     _ => {

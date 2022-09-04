@@ -7,14 +7,15 @@ description = "A shell for Unix-like systems"
 readme = "README.md"
 homepage = "https://github.com/El-Wumbus/I-Hate-Linux-Shells"
 repository = "https://github.com/El-Wumbus/I-Hate-Linux-Shells"
-license = "LGPLv3"
-license-file = "LICENSE.md"
+license = "LGPL-v3-only"
+# license-file = "LICENSE.md"
 
 [[bin]]
 name = "ihlsh"
 path = "src/main.rs"
 
 [dependencies]
-users="*"
-libc="*"
+users="0.11.0"
+libc="0.2.132"
+exec = "0.3.1"
 structopt = "0.3"
