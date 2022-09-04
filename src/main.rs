@@ -3,7 +3,7 @@ mod defines;
 mod ansi;
 
 extern crate libc;
-use std::{env};
+use std::env;
 use std::io::{stdin,stdout, Write};
 use std::os::unix::process::CommandExt;
 use std::path::Path;
@@ -107,24 +107,32 @@ fn main()
             continue;
         }
 
-        let commands = cut_commands(&input);
+        let commands = cut_commands(input);
         for command in commands
         {
             for mut dependent_command in command
             {
+                
                 let mut is_background = false;
-                if let Some(&"&") = dependent_command.last()
+                let dependent_command_last:String;
+                match dependent_command.last()
+                {
+                    Some(s) => dependent_command_last = s.clone(),
+                    None => dependent_command_last = String::from(""),
+                }
+                
+                if String::from("&") == dependent_command_last
                 {
                     is_background = true;
                     dependent_command.pop();
                 }
-                match dependent_command[0]
+                match dependent_command[0].as_str()
                 {
                     "quit" => 
                     {
                         std::process::exit(0);
                     },
-                    
+
                     "exit" =>
                     {
                         std::process::exit(0);
@@ -151,7 +159,7 @@ fn main()
                             continue;
                         }
 
-                        change_dir(dependent_command[1]);
+                        change_dir(dependent_command[1].as_str());
                     },
 
 
@@ -220,12 +228,12 @@ impl RunningAs
 }
 
 
-fn run_cmd(command_tok: Vec<&str>, background:bool) -> bool
+fn run_cmd(command_tok: Vec<String>, background:bool) -> bool
 {
     
     unsafe 
     {
-        let mut command_instance = Command::new(command_tok[0]);
+        let mut command_instance = Command::new(command_tok[0].clone());
 
         if let Ok(mut child) = command_instance.args(&command_tok[1..]).pre_exec(|| 
                 {

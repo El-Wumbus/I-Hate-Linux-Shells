@@ -1,14 +1,63 @@
+// use std::env;
 
-pub fn cut_commands(command_string: &str) -> Vec<Vec<Vec<&str>>> {
-    let commands: Vec<&str> = command_string.split(';').collect();
-    let mut command_tok: Vec<Vec<Vec<&str>>> = Vec::new();
-    for command in commands.iter() {
-        let dependent_commands: Vec<&str> = command.split("&&").collect();
-        let mut temp_vec: Vec<Vec<&str>> = Vec::new();
-        for dependent_command in dependent_commands.iter() {
-            temp_vec.push(dependent_command.split_whitespace().collect());
+pub fn cut_commands(command_string: String) -> Vec<Vec<Vec<String>>> {
+    let commands_split= command_string.split(';');
+    
+    let mut commands:Vec<String> = Vec::new();
+    for s in commands_split {
+        commands.push(String::from(s));
+    }
+
+    let mut command_tok: Vec<Vec<Vec<String>>> = Vec::new();
+    for command in commands {
+        let dependent_commands_split = command.split("&&");
+        
+        let mut dependent_commands: Vec<String> = Vec::new();
+        for s in dependent_commands_split {
+            dependent_commands.push(String::from(s));
+        }
+
+        let mut real_commands:Vec<String>=Vec::new();
+        for command in dependent_commands
+        {
+        //     if !command.starts_with("$")
+        //     {
+        //         real_commands.push(command);
+        //         continue;
+        //     }
+
+        // let clean:String = clean_env(command);
+        // let result:String;
+        // result = match env::var(clean.clone())
+        // {
+        //     Ok(x) => x,
+        //     Err(_) => clean,
+
+        // };
+
+        real_commands.push(command);
+        }
+        let mut temp_vec: Vec<Vec<String>> = Vec::new();
+        for dependent_command in real_commands {
+            let cmdvec_split = dependent_command.split_whitespace();
+            let mut cmdvec:Vec<String> = Vec::new();
+            for s in cmdvec_split
+            {
+                cmdvec.push(String::from(s));
+            }
+            temp_vec.push(cmdvec);
         }
         command_tok.push(temp_vec);
     }
-    command_tok
+    let tmpcmd = command_tok.to_owned();
+    
+    tmpcmd
 }
+
+
+// fn clean_env(string:String) -> String
+// {
+//     let mut chars = string.chars();
+//     chars.next();
+//     String::from(chars.as_str())
+// }
