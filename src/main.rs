@@ -16,12 +16,12 @@ use structopt::StructOpt;
 use users::{get_current_uid, get_user_by_uid};
 
 fn main() {
-    // let home:String;
-    // match env::var("HOME")
-    // {
-    //     Ok(x) => home = x.clone(),
-    //     Err(_) => home = String::from("/"),
-    // }
+    //// let home:String;
+    //// match env::var("HOME")
+    //// {
+    ////     Ok(x) => home = x.clone(),
+    ////     Err(_) => home = String::from("/"),
+    //// }
 
     let mut _interactive: bool = false;
     let mut script: bool = false;
@@ -76,7 +76,7 @@ fn main() {
             // Strings are pointers, the actual data doesn't get auto copied so we clone it.
             input = String::clone(&command_line_command);
         } else if script {
-            // input = get_cmd(); //placeholder
+            //// input = get_cmd(); //placeholder
             return;
         } else {
             print!("{}", command_prompt);
@@ -223,9 +223,10 @@ pub fn printerror(string: String) {
 pub fn get_cmd() -> String {
     let mut command_string: String = String::new();
     stdin().read_line(&mut command_string).unwrap();
-    if command_string.trim() == "" {
-        return String::from("");
+    let command:String = String::from(command_string.trim());
+    if command == "" {
+        return command
     }
 
-    command_string
+    command
 }
