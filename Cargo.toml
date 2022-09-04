@@ -7,8 +7,8 @@ description = "A shell for Unix-like systems"
 readme = "README.md"
 homepage = "https://github.com/El-Wumbus/I-Hate-Linux-Shells"
 repository = "https://github.com/El-Wumbus/I-Hate-Linux-Shells"
-license = "LGPL-v3-only"
-# license-file = "LICENSE.md"
+# license = "LGPL-v3-only"
+license-file = "LICENSE.md"
 
 [[bin]]
 name = "ihlsh"
