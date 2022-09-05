@@ -13,7 +13,7 @@ use std::{
     io::{stdin, stdout, Write},
     os::unix::process::CommandExt,
     process::Command,
-    mem::drop,
+    mem::drop, path::PathBuf,
 };
 
 use structopt::StructOpt;
@@ -271,7 +271,22 @@ pub fn printerror(string: String)
 
 pub fn get_cmd(user: &str) -> String
 {
-    let mut command_prompt: String = String::from(format!("{} > ", user));
+    let currentdir:PathBuf = match env::current_dir()
+    {
+        Ok(x) => x,
+        Err(_) => PathBuf::from(""),
+    };
+    let mode:String;
+    if user == "root"
+    {
+        mode = String::from("#");
+    }
+    else
+    {
+        mode = String::from("$");
+    }
+
+    let mut command_prompt: String = String::from(format!("┌─[{}]\n└─[{} {}] > ", currentdir.to_string_lossy(),user,mode));
     match env::var("PS1")
     {
         Ok(x) => command_prompt = x.clone(),
