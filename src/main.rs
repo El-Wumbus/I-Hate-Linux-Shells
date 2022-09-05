@@ -6,12 +6,16 @@ mod parsing;
 extern crate libc;
 #[allow(non_snake_case)]
 use ansi::Ansi;
-use defines::PROGRAM_NAME;
 use parsing::cut_commands;
-use std::env;
-use std::io::{stdin, stdout, Write};
-use std::os::unix::process::CommandExt;
-use std::process::Command;
+use defines::PROGRAM_NAME;
+use std::{
+    env,
+    io::{stdin, stdout, Write},
+    os::unix::process::CommandExt,
+    process::Command,
+    mem::drop,
+};
+
 use structopt::StructOpt;
 use users::{get_current_uid, get_user_by_uid};
 
@@ -21,7 +25,7 @@ fn main()
     //// match env::var("HOME")
     //// {
     ////     Ok(x) => home = x.clone(),
-    ////     Err(_) => home = String::from("/"),
+    ////     Err(_) => home = String::from(""),
     //// }
 
     let mut _interactive: bool = false;
@@ -63,18 +67,13 @@ fn main()
     }
 
     // Get the Username
-    let user = get_user_by_uid(get_current_uid()).unwrap();
-
-    let mut command_prompt: String;
-
-    // Making prompt and stuff
-    command_prompt = String::from(format!("{} > ", user.name().to_string_lossy()));
-    match env::var("PS1")
+    let tmpuser = match get_user_by_uid(get_current_uid())
     {
-        Ok(x) => command_prompt = x.clone(),
-        Err(_) => (),
-    }
-
+        Some(x) => x,
+        None => users::User::new(0, "root", 0),
+    };
+    let user: &str = tmpuser.name().to_str().unwrap();
+    drop(&tmpuser);
     loop
     {
         // The main loop
@@ -93,10 +92,7 @@ fn main()
         }
         else
         {
-            print!("{}", command_prompt);
-            stdout().flush().expect("ihls:: Couldn't flush stdout");
-            // Actually get command
-            input = get_cmd();
+            input = get_cmd(user.clone());
         }
         /* Ensure to skip lines that are empty so the program
         doesn't panic. */
@@ -273,8 +269,17 @@ pub fn printerror(string: String)
     eprintln!("{}{}{}", Ansi::RED, string, Ansi::COLOR_END);
 }
 
-pub fn get_cmd() -> String
+pub fn get_cmd(user: &str) -> String
 {
+    let mut command_prompt: String = String::from(format!("{} > ", user));
+    match env::var("PS1")
+    {
+        Ok(x) => command_prompt = x.clone(),
+        Err(_) => (),
+    }
+    print!("{}", command_prompt);
+    stdout().flush().expect("ihls:: Couldn't flush stdout");
+
     let mut command_string: String = String::new();
     stdin().read_line(&mut command_string).unwrap();
     let command: String = String::from(command_string.trim());

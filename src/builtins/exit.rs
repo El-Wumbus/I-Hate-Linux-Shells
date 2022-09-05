@@ -5,7 +5,4 @@ macro_rules! exit_program {
     };
 }
 
-pub fn run(code: i32)
-{
-    std::process::exit(code);
-}
+pub fn run(code: i32) { std::process::exit(code); }
