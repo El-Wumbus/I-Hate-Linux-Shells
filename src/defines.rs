@@ -1,1 +1,1 @@
-pub const PROGRAM_NAME:&str = "IHLSH";
+pub const PROGRAM_NAME: &str = "IHLSH";

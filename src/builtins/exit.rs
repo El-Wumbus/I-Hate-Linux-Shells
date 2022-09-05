@@ -1,11 +1,11 @@
 #[macro_export]
 macro_rules! exit_program {
-  ($code:expr) => {
-    builtins::exit::run($code);
-  }
+    ($code:expr) => {
+        builtins::exit::run($code);
+    };
 }
 
-pub fn run(code:i32)
+pub fn run(code: i32)
 {
-  std::process::exit(code);
+    std::process::exit(code);
 }

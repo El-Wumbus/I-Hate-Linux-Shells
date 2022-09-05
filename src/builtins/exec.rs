@@ -1,8 +1,8 @@
 use exec;
-pub fn run(command:&[String]) -> exec::Error
+pub fn run(command: &[String]) -> exec::Error
 {
-  let err = exec::Command::new(command[0].clone(
-
-  )).args(&command[1..]).exec();
-  err
+    let err = exec::Command::new(command[0].clone())
+        .args(&command[1..])
+        .exec();
+    err
 }

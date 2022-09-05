@@ -15,7 +15,8 @@ use std::process::Command;
 use structopt::StructOpt;
 use users::{get_current_uid, get_user_by_uid};
 
-fn main() {
+fn main()
+{
     //// let home:String;
     //// match env::var("HOME")
     //// {
@@ -29,22 +30,27 @@ fn main() {
     let command_line_command: String;
 
     let opt = Opt::from_args();
-    match RunningAs::decide(opt) {
-        RunningAs::Interactive(val) => {
+    match RunningAs::decide(opt)
+    {
+        RunningAs::Interactive(val) =>
+        {
             _interactive = val;
             command_line_command = String::from("");
         }
-        RunningAs::Script(val) => {
+        RunningAs::Script(val) =>
+        {
             script = val;
             command_line_command = String::from("");
         }
-        RunningAs::CommandLine(val) => {
+        RunningAs::CommandLine(val) =>
+        {
             command_line = true;
             command_line_command = val.clone();
         }
     }
 
-    if _interactive {
+    if _interactive
+    {
         // Set the variable that tells what the shell is.
         env::set_var("0", "ihlsh");
     }
@@ -63,22 +69,30 @@ fn main() {
 
     // Making prompt and stuff
     command_prompt = String::from(format!("{} > ", user.name().to_string_lossy()));
-    match env::var("PS1") {
+    match env::var("PS1")
+    {
         Ok(x) => command_prompt = x.clone(),
         Err(_) => (),
     }
-    loop {
+
+    loop
+    {
         // The main loop
 
         let input: String;
 
-        if command_line {
+        if command_line
+        {
             // Strings are pointers, the actual data doesn't get auto copied so we clone it.
             input = String::clone(&command_line_command);
-        } else if script {
+        }
+        else if script
+        {
             //// input = get_cmd(); //placeholder
             return;
-        } else {
+        }
+        else
+        {
             print!("{}", command_prompt);
             stdout().flush().expect("ihls:: Couldn't flush stdout");
             // Actually get command
@@ -86,45 +100,57 @@ fn main() {
         }
         /* Ensure to skip lines that are empty so the program
         doesn't panic. */
-        if input.trim() == "" {
+        if input.trim() == ""
+        {
             continue;
         }
 
         let commands = cut_commands(input);
-        for command in commands {
-            for mut dependent_command in command {
+        for command in commands
+        {
+            for mut dependent_command in command
+            {
                 let mut is_background = false;
                 let dependent_command_last: String;
-                match dependent_command.last() {
+                match dependent_command.last()
+                {
                     Some(s) => dependent_command_last = s.clone(),
                     None => dependent_command_last = String::from(""),
                 }
 
-                if String::from("&") == dependent_command_last {
+                if String::from("&") == dependent_command_last
+                {
                     is_background = true;
                     dependent_command.pop();
                 }
-                match dependent_command[0].as_str() {
-                    "exit" => {
+                match dependent_command[0].as_str()
+                {
+                    "exit" =>
+                    {
                         if dependent_command.len() < 2
                         {
                             exit_program!(0);
                         }
                         else
                         {
-                            let exit_code:i32 = match dependent_command[1].parse()  {
+                            let exit_code: i32 = match dependent_command[1].parse()
+                            {
                                 Ok(x) => x,
                                 Err(_) => 1,
                             };
 
                             exit_program!(exit_code);
                         }
-                    },
-                    "cd" => {
-                        if dependent_command.len() < 2 {
+                    }
+                    "cd" =>
+                    {
+                        if dependent_command.len() < 2
+                        {
                             let mut home: String = String::from("/");
-                            match env::var("HOME") {
-                                Ok(x) => {
+                            match env::var("HOME")
+                            {
+                                Ok(x) =>
+                                {
                                     home = x.clone();
                                 }
                                 Err(_) => (),
@@ -138,8 +164,9 @@ fn main() {
                         }
 
                         change_directory!(dependent_command[1].as_str());
-                    },
-                    "exec" => {
+                    }
+                    "exec" =>
+                    {
                         if dependent_command.len() < 2
                         {
                             printerror(String::from("No arguments supplied to 'exec'"));
@@ -147,20 +174,23 @@ fn main() {
                         else
                         {
                             let err = builtins::exec::run(&dependent_command[1..]);
-                            match err {
+                            match err
+                            {
                                 exec::Error::Errno(x) => printerror(format!("Exec error: {}", x)),
                                 exec::Error::BadArgument(_) => (),
                             }
                         }
                     }
 
-                    _ => {
+                    _ =>
+                    {
                         run_cmd(dependent_command, is_background);
                     }
                 }
             }
         }
-        if command_line {
+        if command_line
+        {
             break;
         }
     }
@@ -168,7 +198,8 @@ fn main() {
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "ihlsh")]
-struct Opt {
+struct Opt
+{
     /// Command string to run.
     #[structopt(short, long)]
     command: Option<String>,
@@ -178,22 +209,27 @@ struct Opt {
     script: Option<String>,
 }
 
-enum RunningAs {
+enum RunningAs
+{
     Interactive(bool),
     Script(bool),
     CommandLine(String),
 }
 
-impl RunningAs {
-    fn decide(opt: Opt) -> RunningAs {
+impl RunningAs
+{
+    fn decide(opt: Opt) -> RunningAs
+    {
         let mut _i_hate_rust: bool = false;
 
-        match opt.command {
+        match opt.command
+        {
             Some(x) => return RunningAs::CommandLine(x.clone()),
             None => _i_hate_rust = true,
         }
 
-        match opt.script {
+        match opt.script
+        {
             Some(_) => return RunningAs::Script(true),
             None => _i_hate_rust = true,
         }
@@ -202,7 +238,8 @@ impl RunningAs {
     }
 }
 
-fn run_cmd(command_tok: Vec<String>, background: bool) -> bool {
+fn run_cmd(command_tok: Vec<String>, background: bool) -> bool
+{
     unsafe {
         let mut command_instance = Command::new(command_tok[0].clone());
 
@@ -215,7 +252,8 @@ fn run_cmd(command_tok: Vec<String>, background: bool) -> bool {
             })
             .spawn()
         {
-            if !background {
+            if !background
+            {
                 let ret: bool = child.wait().expect("Command did not run!").success();
                 print!("\r");
                 return ret;
@@ -230,16 +268,19 @@ fn run_cmd(command_tok: Vec<String>, background: bool) -> bool {
     }
 }
 
-pub fn printerror(string: String) {
+pub fn printerror(string: String)
+{
     eprintln!("{}{}{}", Ansi::RED, string, Ansi::COLOR_END);
 }
 
-pub fn get_cmd() -> String {
+pub fn get_cmd() -> String
+{
     let mut command_string: String = String::new();
     stdin().read_line(&mut command_string).unwrap();
-    let command:String = String::from(command_string.trim());
-    if command == "" {
-        return command
+    let command: String = String::from(command_string.trim());
+    if command == ""
+    {
+        return command;
     }
 
     command
