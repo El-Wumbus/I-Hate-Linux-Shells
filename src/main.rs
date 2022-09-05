@@ -293,6 +293,7 @@ pub fn get_cmd(user: &str) -> String
         user,
         mode
     ));
+
     match env::var("PS1")
     {
         Ok(x) => command_prompt = x.clone(),
@@ -304,10 +305,5 @@ pub fn get_cmd(user: &str) -> String
     let mut command_string: String = String::new();
     stdin().read_line(&mut command_string).unwrap();
     let command: String = String::from(command_string.trim());
-    if command == ""
-    {
-        return command;
-    }
-
     command
 }
