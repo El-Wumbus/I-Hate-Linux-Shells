@@ -10,12 +10,13 @@ use parsing::cut_commands;
 use defines::PROGRAM_NAME;
 use std::{
     env,
-    io::{stdin, stdout, Write},
     os::unix::process::CommandExt,
     process::Command,
     mem::drop,
     path::PathBuf,
 };
+
+use rustyline::{error::ReadlineError, Editor};
 
 use structopt::StructOpt;
 use users::{get_current_uid, get_user_by_uid};
@@ -30,7 +31,7 @@ fn main()
     //// }
 
     let mut _interactive: bool = false;
-    let mut script: bool = false;
+    let mut _script: bool = false;
     let mut command_line: bool = false;
     let command_line_command: String;
 
@@ -44,7 +45,7 @@ fn main()
         }
         RunningAs::Script(val) =>
         {
-            script = val;
+            _script = val;
             command_line_command = String::from("");
         }
         RunningAs::CommandLine(val) =>
@@ -75,6 +76,7 @@ fn main()
     };
     let user: &str = tmpuser.name().to_str().unwrap();
     drop(&tmpuser);
+    let mut rl = Editor::<()>::new().unwrap();
     loop
     {
         // The main loop
@@ -86,14 +88,9 @@ fn main()
             // Strings are pointers, the actual data doesn't get auto copied so we clone it.
             input = String::clone(&command_line_command);
         }
-        else if script
-        {
-            //// input = get_cmd(); //placeholder
-            return;
-        }
         else
         {
-            input = get_cmd(user.clone());
+            input = get_cmd(user.clone(), &mut rl);
         }
         /* Ensure to skip lines that are empty so the program
         doesn't panic. */
@@ -235,42 +232,12 @@ impl RunningAs
     }
 }
 
-fn run_cmd(command_tok: Vec<String>, background: bool) -> bool
-{
-    unsafe {
-        let mut command_instance = Command::new(command_tok[0].clone());
-
-        if let Ok(mut child) = command_instance
-            .args(&command_tok[1..])
-            .pre_exec(|| {
-                libc::signal(libc::SIGINT, libc::SIG_DFL);
-                libc::signal(libc::SIGQUIT, libc::SIG_DFL);
-                Result::Ok(())
-            })
-            .spawn()
-        {
-            if !background
-            {
-                let ret: bool = child.wait().expect("Command did not run!").success();
-                print!("\r");
-                return ret;
-            }
-
-            println!("{}:: {} working...", PROGRAM_NAME, child.id());
-            return false; // good
-        }
-
-        printerror(format!("{}:: Command not found!", PROGRAM_NAME));
-        return true; // bad
-    }
-}
-
 pub fn printerror(string: String)
 {
     eprintln!("{}{}{}", Ansi::RED, string, Ansi::COLOR_END);
 }
 
-pub fn get_cmd(user: &str) -> String
+pub fn get_cmd(user: &str, rl: &mut Editor<()>) -> String
 {
     let currentdir: PathBuf = match env::current_dir()
     {
@@ -299,11 +266,55 @@ pub fn get_cmd(user: &str) -> String
         Ok(x) => command_prompt = x.clone(),
         Err(_) => (),
     }
-    print!("{}", command_prompt);
-    stdout().flush().expect("ihls:: Couldn't flush stdout");
+    let readline = rl.readline(command_prompt.as_str());
 
-    let mut command_string: String = String::new();
-    stdin().read_line(&mut command_string).unwrap();
+    let command_string: String = match readline
+    {
+        Ok(line) => line,
+        Err(ReadlineError::Interrupted) =>
+        {
+            return String::from("");
+        }
+        Err(ReadlineError::Eof) =>
+        {
+            return String::from("");
+        }
+        Err(err) =>
+        {
+            println!("Error: {:?}", err);
+            return String::from("");
+        }
+    };
     let command: String = String::from(command_string.trim());
     command
+}
+
+fn run_cmd(command_tok: Vec<String>, background: bool) -> bool
+{
+    unsafe {
+        let mut command_instance = Command::new(command_tok[0].clone());
+
+        if let Ok(mut child) = command_instance
+            .args(&command_tok[1..])
+            .pre_exec(|| {
+                libc::signal(libc::SIGINT, libc::SIG_DFL);
+                libc::signal(libc::SIGQUIT, libc::SIG_DFL);
+                Result::Ok(())
+            })
+            .spawn()
+        {
+            if !background
+            {
+                let ret: bool = child.wait().expect("Command did not run!").success();
+                print!("\r");
+                return ret;
+            }
+
+            println!("{}:: {} working...", PROGRAM_NAME, child.id());
+            return false; // good
+        }
+
+        printerror(format!("{}:: Command not found!", PROGRAM_NAME));
+        return true; // bad
+    }
 }

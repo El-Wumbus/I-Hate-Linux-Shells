@@ -1,4 +1,3 @@
-// use std::env;
 
 pub fn cut_commands(command_string: String) -> Vec<Vec<Vec<String>>>
 {
@@ -58,10 +57,3 @@ pub fn cut_commands(command_string: String) -> Vec<Vec<Vec<String>>>
 
     tmpcmd
 }
-
-// fn clean_env(string:String) -> String
-// {
-//     let mut chars = string.chars();
-//     chars.next();
-//     String::from(chars.as_str())
-// }
